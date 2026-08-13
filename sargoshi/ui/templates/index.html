@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Status</h2>
+    <div id="status" hx-get="{{ url_for('ui.status_partial') }}"
+         hx-trigger="every 5s" hx-swap="innerHTML">
+      {% include "_status.html" %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Model</h2>
+    <form>
+      <label>Active model
+        <select name="model">
+          {% for m in models %}
+            <option value="{{ m }}" {% if m == active_model %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button hx-post="{{ url_for('ui.switch_model') }}" hx-include="closest form"
+              hx-target="#status" hx-swap="innerHTML" hx-indicator="#model-spin"
+              hx-disabled-elt="this">Switch</button>
+      <span id="model-spin" class="htmx-indicator">switching (pre-warming)…</span>
+    </form>
+    <p class="hint">Switching pre-warms the new model before it goes active — this can take
+      a while for large models or a first-time download.</p>
+  </section>
+</div>
+
+{% if speaker_enabled %}
+<section class="card">
+  <h2>Enroll speaker</h2>
+  <form hx-post="{{ url_for('ui.enrol') }}" hx-encoding="multipart/form-data"
+        hx-target="#speakers" hx-swap="innerHTML" hx-indicator="#enroll-spin"
+        hx-disabled-elt="find button">
+    <div class="row">
+      <label>Name <input name="name" required></label>
+      <label>Gender <input name="gender" placeholder="Male / Female"></label>
+      <label>Role <input name="role" placeholder="resident"></label>
+      <label>Language <input name="language" placeholder="en"></label>
+    </div>
+    <label>WAV file(s) — one phrase each (converted to 16 kHz mono)
+      <input type="file" name="wav" accept=".wav" multiple required></label>
+    <button type="submit">Enroll</button>
+    <span id="enroll-spin" class="htmx-indicator">enrolling…</span>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Enrolled speakers</h2>
+  <div id="speakers">
+    {% include "_speakers.html" %}
+  </div>
+</section>
+{% else %}
+<section class="card">
+  <h2>Speakers</h2>
+  <p class="hint">Speaker ID is disabled (set <code>speaker.enabled: true</code> in the
+    config and install the <code>speaker</code> extra).</p>
+</section>
+{% endif %}
+
+{% endblock %}

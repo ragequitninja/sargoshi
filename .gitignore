@@ -1,0 +1,25 @@
+/config.yaml
+/version.txt
+/version_githash.txt
+.DS_Store
+.idea
+
+# Runtime data (models, voiceprint DB, etc.)
+/data/
+/models/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

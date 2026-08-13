@@ -1,0 +1,47 @@
+{% if message %}<div class="msg {{ message_type }}">{{ message }}</div>{% endif %}
+<h3 style="margin:.2rem 0 .6rem">{{ speaker.name }} — voiceprints</h3>
+
+{% if embeddings %}
+<table>
+  <thead>
+    <tr><th>ID</th><th>Enrolled</th><th>Model</th><th>Audio</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for e in embeddings %}
+    <tr>
+      <td class="mono">{{ e.id }}</td>
+      <td>{{ e.created_at }}</td>
+      <td><span class="tag">{{ e.model }}</span></td>
+      <td>
+        {% if e.audio_bytes %}
+          <a href="{{ url_for('ui.embedding_audio', embedding_id=e.id) }}">
+            download ({{ (e.audio_bytes / 1024) | round(1) }} KB)</a>
+        {% else %}<span class="hint">—</span>{% endif %}
+      </td>
+      <td>
+        <button class="danger" hx-post="{{ url_for('ui.delete_embedding') }}"
+                hx-vals='{"id": "{{ e.id }}", "speaker_id": "{{ speaker.id }}"}'
+                hx-target="#speakers" hx-swap="innerHTML"
+                hx-confirm="Delete this voiceprint?">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="hint">No voiceprints — this profile matches nobody until you add samples.</p>
+{% endif %}
+
+<form hx-post="{{ url_for('ui.enrol') }}" hx-encoding="multipart/form-data"
+      hx-target="#speakers" hx-swap="innerHTML" hx-indicator="#add-spin"
+      hx-disabled-elt="find button" style="margin-top:.9rem">
+  <input type="hidden" name="speaker_id" value="{{ speaker.id }}">
+  <label>Add more WAV file(s) — converted to 16 kHz mono
+    <input type="file" name="wav" accept=".wav" multiple required></label>
+  <div>
+    <button type="submit">Add samples</button>
+    <span id="add-spin" class="htmx-indicator">adding…</span>
+    <button type="button" class="secondary" hx-get="{{ url_for('ui.speakers_partial') }}"
+            hx-target="#speakers" hx-swap="innerHTML">Back</button>
+  </div>
+</form>

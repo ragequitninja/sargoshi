@@ -1,0 +1,176 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sargoshi"
+version = "0.1.0"
+description = "Speech-to-text and speaker-identification service: Wyoming, OpenAI REST, and gRPC frontends over one warm model pool."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Pieter Harvey", email = "pieter.harvey@icloud.com" }]
+keywords = [
+  "whisper",
+  "speech-to-text",
+  "asr",
+  "wyoming",
+  "home-assistant",
+  "speaker-identification",
+]
+
+dependencies = [
+  "numpy>=1.24",           # audio/vector math (backends, speaker)
+  "pyyaml>=6.0",           # config load / full write
+  "ruamel.yaml>=0.18",     # comment-preserving config writes (UI/runtime edits)
+  "wyoming>=1.5",          # Wyoming frontend (Home Assistant) — the always-on frontend
+  "quart>=0.19",
+  "quart-schema>=0.20",
+  "hypercorn>=0.16",
+  "jinja2>=3.1",
+  "pydantic>=2.6",
+  "sqlalchemy[asyncio]>=2.0",  # voiceprint store (async ORM)
+  "aiosqlite>=0.20",           # async SQLite driver for the store
+  "alembic>=1.13",             # schema migrations, auto-applied at startup
+  "torch>=2.2",
+  "torchaudio>=2.2",
+  "soundfile>=0.12",
+]
+
+[project.optional-dependencies]
+ctranslate2 = [
+  "faster-whisper>=1.0"
+]
+speechbrain = [
+  "speechbrain>=1.0"
+]
+
+[project.scripts]
+sargoshi = "sargoshi.__main__:main"
+
+[dependency-groups]
+dev = [
+  "grpcio-tools>=1.60",   # proto codegen
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "pytest-cov>=5.0",      # coverage (pytest --cov)
+  "ruff>=0.5",
+  "mypy>=1.9",
+  "types-pyyaml>=6.0",
+  "black>=24.0",
+  "flake8>=7.0",
+  "pylint>=3.0",
+  "isort>=5.13",
+  "autopep8>=2.0",
+]
+
+[project.urls]
+"Source Code" = "http://github.com/ragequitninja/sargoshi"
+
+[tool.setuptools]
+platforms = ["any"]
+zip-safe  = true
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["sargoshi", "sargoshi.*"]
+exclude = ["tests", "tests.*"]
+
+[tool.coverage.run]
+branch = true
+source = ["sargoshi"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["sargoshi"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["sargoshi"]
+
+[[tool.mypy.overrides]]
+module = [
+  "faster_whisper.*",
+  "speechbrain.*",
+]
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 120
+target-version = ['py312', 'py313']
+include = '\.pyi?$'
+exclude = '''
+/(
+  \.eggs
+| \.git
+| \.hg
+| \.mypy_cache
+| \.tox
+| \.venv
+| _build
+| buck-out
+| build
+| dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+  "abstract-method",
+  "cyclic-import",
+  "duplicate-code",
+  "global-statement",
+  "import-outside-toplevel",
+  "inconsistent-return-statements",
+  "locally-disabled",
+  "not-context-manager",
+  "too-few-public-methods",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-instance-attributes",
+  "too-many-lines",
+  "too-many-locals",
+  "too-many-public-methods",
+  "too-many-return-statements",
+  "too-many-statements",
+  "too-many-boolean-expressions",
+  "unnecessary-pass",
+  "unused-argument",
+  "broad-except",
+  "too-many-nested-blocks",
+  "invalid-name",
+  "unused-import",
+  "fixme",
+  "useless-super-delegation",
+  "missing-module-docstring",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "import-error",
+  "consider-using-with",
+  "R0917",
+  "C0301",
+]

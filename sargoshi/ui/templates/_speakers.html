@@ -1,0 +1,39 @@
+{% if message %}<div class="msg {{ message_type }}">{{ message }}</div>{% endif %}
+{% if speakers %}
+<table>
+  <thead>
+    <tr><th>Name</th><th>Embeddings</th><th>Model</th><th>Attributes</th><th>ID</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for s in speakers %}
+    <tr>
+      <td>{{ s.name }}</td>
+      <td>{{ s.embedding_count }}</td>
+      <td>
+        {% for m in s.models %}
+          <span class="tag{% if m == active_speaker_model %} active{% endif %}">{{ m }}</span>
+        {% else %}
+          <span class="hint">—</span>
+        {% endfor %}
+        {% if active_speaker_model and s.models and active_speaker_model not in s.models %}
+          <span class="hint">stale</span>
+        {% endif %}
+      </td>
+      <td>{% for k, v in s.attributes.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      <td class="mono">{{ s.id }}</td>
+      <td>
+        <button class="small secondary" hx-get="{{ url_for('ui.manage_embeddings') }}?id={{ s.id }}"
+                hx-target="#speakers" hx-swap="innerHTML">Samples ({{ s.embedding_count }})</button>
+        <button class="small secondary" hx-get="{{ url_for('ui.edit_speaker') }}?id={{ s.id }}"
+                hx-target="#speakers" hx-swap="innerHTML">Edit</button>
+        <button class="danger" hx-post="{{ url_for('ui.delete_speaker') }}"
+                hx-vals='{"id": "{{ s.id }}"}' hx-target="#speakers" hx-swap="innerHTML"
+                hx-confirm="Delete {{ s.name }}?">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="hint">No speakers enrolled yet.</p>
+{% endif %}

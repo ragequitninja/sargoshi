@@ -1,0 +1,16 @@
+{% if message %}<div class="msg {{ message_type }}">{{ message }}</div>{% endif %}
+<dl class="kv">
+  <dt>Model</dt>
+  <dd>{{ status.model.model }}
+    <span class="tag">{{ status.model.device }}/{{ status.model.compute_type }}</span></dd>
+  <dt>Ready</dt>
+  <dd>{{ "yes" if status.ready else "warming…" }}</dd>
+  {% if status.speaker %}
+  <dt>Speaker ID</dt>
+  <dd>{% if status.speaker.enabled %}enabled
+        · {{ "ready" if status.speaker.ready else "loading…" }}
+      {% else %}disabled{% endif %}</dd>
+  {% endif %}
+  <dt>Version</dt>
+  <dd>{{ status.version }}</dd>
+</dl>

@@ -1,0 +1,15 @@
+<div class="msg ok">Editing metadata for this speaker — the enrolled audio is unchanged.</div>
+<form hx-post="{{ url_for('ui.save_speaker') }}" hx-target="#speakers" hx-swap="innerHTML">
+  <input type="hidden" name="id" value="{{ s.id }}">
+  <div class="row">
+    <label>Name <input name="name" value="{{ s.name }}" required></label>
+    <label>Gender <input name="gender" value="{{ s.attributes.get('gender', '') }}"></label>
+    <label>Role <input name="role" value="{{ s.attributes.get('role', '') }}"></label>
+    <label>Language <input name="language" value="{{ s.attributes.get('language', '') }}"></label>
+  </div>
+  <div>
+    <button type="submit">Save</button>
+    <button type="button" class="secondary" hx-get="{{ url_for('ui.speakers_partial') }}"
+            hx-target="#speakers" hx-swap="innerHTML">Cancel</button>
+  </div>
+</form>

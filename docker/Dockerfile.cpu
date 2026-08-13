@@ -1,0 +1,58 @@
+FROM python:3.13-slim-trixie
+
+ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+LABEL \
+    org.opencontainers.image.authors="Pieter Harvey" \
+    org.opencontainers.image.description="Speech recognition and text-to-speech" \
+    org.opencontainers.image.documentation="https://github.com/ragequitninja/sargoshi/blob/main/README.md" \
+    org.opencontainers.image.licenses="Apache-2.0" \
+    org.opencontainers.image.source="https://github.com/ragequitninja/sargoshi" \
+    org.opencontainers.image.title="Sargoshi" \
+    org.opencontainers.image.url="https://github.com/ragequitninja/sargoshi"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsndfile1 \
+        libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/data/hf
+
+RUN python -m venv "$VIRTUAL_ENV" && pip install --upgrade pip
+
+# CPU-only PyTorch to reduce image size by not bundling CUDA.
+RUN pip install --index-url https://download.pytorch.org/whl/cpu \
+        torch torchaudio
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY setup.cfg ./
+COPY version.txt ./
+COPY version_githash.txt ./
+COPY sargoshi ./sargoshi
+
+RUN pip install -e ".[ctranslate2,speechbrain]" \
+    && find /opt/venv -type d -name '__pycache__' -prune -exec rm -rf {} + \
+    && find /opt/venv -type f -name '*.pyc' -delete
+
+RUN useradd --create-home --uid 1000 sargoshi \
+    && mkdir -p /data \
+    && chown -R sargoshi:sargoshi /app /data
+
+USER sargoshi
+WORKDIR /data
+
+EXPOSE 10300 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
+    CMD python -c "import os,urllib.request as u; u.urlopen('http://127.0.0.1:8080/ready',timeout=3)"
+
+ENTRYPOINT ["sargoshi"]
+CMD ["--config", "config.yaml"]
