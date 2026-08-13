@@ -26,7 +26,11 @@ jobs:
         run: |
           matrix=$(find docker -maxdepth 1 -type f -name 'Dockerfile.*' | sort \
             | jq -R -s -c '{include: (split("\n") | map(select(length > 0))
-                | map({variant: sub("^docker/Dockerfile\\."; ""), file: .}))}')
+                | map(. as $file
+                      | ($file | sub("^docker/Dockerfile\\."; "")) as $variant
+                      | {variant: $variant,
+                         file: $file,
+                         suffix: (if $variant == "cpu" then "" else "-\($variant)" end)}))}')
           echo "Discovered: $matrix"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -76,8 +80,9 @@ jobs:
           file: ${{ matrix.file }}
           platforms: linux/amd64,linux/aarch64
           push: true
-          tags: ${{ env.REGISTRY_LOWER }}/${{ env.REPOSITORY_LOWER }}:nightly-${{ matrix.variant }}
-          labels: "nightly-${{ matrix.variant }}"
+          # cpu is the default flavour (empty suffix) → :nightly; others → :nightly-<variant>
+          tags: ${{ env.REGISTRY_LOWER }}/${{ env.REPOSITORY_LOWER }}:nightly${{ matrix.suffix }}
+          labels: "nightly${{ matrix.suffix }}"
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v4
         with:
