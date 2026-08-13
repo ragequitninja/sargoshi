@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "sargoshi"
@@ -83,9 +83,6 @@ source = ["sargoshi"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["sargoshi"]
 
 [tool.ruff]
 line-length = 120
