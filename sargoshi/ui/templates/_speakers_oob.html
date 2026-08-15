@@ -1,0 +1,5 @@
+{# save_attributes success: refresh the table out-of-band; the modal's own target
+   (#modal-slot) receives the remaining empty body, which closes the modal. #}
+<div id="speakers" hx-swap-oob="innerHTML">
+  {% include "_speakers.html" %}
+</div>

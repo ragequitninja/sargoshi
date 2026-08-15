@@ -164,6 +164,7 @@
     /* Chip — HA-style pill for model / device tags. */
     .tag {
       display: inline-block;
+      white-space: nowrap;
       font-size: .72rem;
       color: var(--secondary-text-color);
       background: var(--secondary-background-color);
@@ -180,6 +181,46 @@
     .htmx-indicator { color: var(--secondary-text-color); font-size: .85rem; margin-left: .5rem; opacity: 0; }
     .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
     form > * + * { margin-top: .85rem; }
+
+    /* Modal — htmx loads the overlay into #modal-slot and removes it on close. */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, .5);
+    }
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow: auto;
+      padding: 16px 20px;
+      background: var(--card-background-color);
+      border-radius: var(--ha-card-border-radius);
+      box-shadow: var(--ha-card-box-shadow);
+    }
+    @media (prefers-color-scheme: dark) { .modal { border: 1px solid var(--divider-color); } }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .6rem; }
+    .modal-head h3 { margin: 0; font-size: 1.05rem; font-weight: 500; }
+    .modal-actions { display: flex; gap: .5rem; margin-top: .85rem; }
+    textarea.json {
+      width: 100%;
+      padding: .5rem .6rem;
+      margin-top: .25rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .85rem;
+      line-height: 1.45;
+      color: inherit;
+      background: var(--input-background-color);
+      border: 1px solid var(--divider-color);
+      border-radius: 4px;
+      resize: vertical;
+    }
+    textarea.json:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
   </style>
 </head>
 <body>
@@ -190,5 +231,7 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  <!-- htmx loads attribute/edit modals here; empty until opened. -->
+  <div id="modal-slot"></div>
 </body>
 </html>

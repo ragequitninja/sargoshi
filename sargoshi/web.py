@@ -84,6 +84,34 @@ def create_app(
     return app
 
 
+class IngressMiddleware:
+    """Mount the app under Home Assistant's ingress prefix.
+
+    HA serves the add-on in an iframe under ``/api/hassio_ingress/<token>/`` and
+    passes that prefix in the ``X-Ingress-Path`` header. We fold it into the ASGI
+    scope's ``root_path`` and prefix the request path so routing still matches the
+    real route while ``url_for`` emits ingress-prefixed URLs — which keeps the
+    vendored htmx, every ``hx-*`` endpoint, and the upload POST inside the ingress
+    session. Without the header (direct access, the Docker health check, Wyoming)
+    it is a no-op, so direct access is unchanged.
+    """
+
+    def __init__(self, app: Quart) -> None:
+        self._app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope["type"] in ("http", "websocket"):
+            prefix = dict(scope.get("headers") or []).get(b"x-ingress-path", b"").decode("latin-1").rstrip("/")
+            if prefix:
+                scope = {
+                    **scope,
+                    "root_path": prefix,
+                    "path": prefix + scope["path"],
+                    "raw_path": prefix.encode("latin-1") + scope.get("raw_path", scope["path"].encode()),
+                }
+        await self._app(scope, receive, send)
+
+
 async def run_web(
     config_service: ConfigService,
     pool: ModelPool,
@@ -104,4 +132,4 @@ async def run_web(
     )
     # Never-resolving trigger so hypercorn doesn't install its own signal
     # handlers; shutdown happens via task cancellation from __main__.
-    await serve(app, hyper, shutdown_trigger=asyncio.Future)
+    await serve(IngressMiddleware(app), hyper, shutdown_trigger=asyncio.Future)

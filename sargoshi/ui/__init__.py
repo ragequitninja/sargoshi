@@ -9,6 +9,7 @@ Current features:
 from __future__ import annotations
 
 import inspect
+import json
 import logging
 from typing import TYPE_CHECKING
 
@@ -92,6 +93,25 @@ def create_ui_blueprint(
             "_embeddings.html",
             speaker=profile,
             embeddings=await speaker.list_embeddings(speaker_id),
+            message=message,
+            message_type=message_type,
+        )
+
+    async def render_attributes_modal(speaker_id, raw=None, message="", message_type="ok"):
+        if speaker is None:
+            return await render_speakers("Speaker ID is disabled.", "error")
+        profile = await speaker.get_speaker(speaker_id)
+        if profile is None:
+            return await render_speakers("Speaker not found.", "error")
+        # ``raw`` (the user's edited text) is preserved on a validation error so
+        # they don't lose their changes; otherwise show the stored attributes.
+        json_text = raw if raw is not None else json.dumps(
+            profile.attributes, indent=2, sort_keys=True, ensure_ascii=False
+        )
+        return await render_template(
+            "_attributes_modal.html",
+            s=profile,
+            attributes_json=json_text,
             message=message,
             message_type=message_type,
         )
@@ -273,6 +293,49 @@ def create_ui_blueprint(
         except Exception as e:
             logger.exception("Update of %r failed", sid)
             return await render_speakers(f"Update failed: {e}", "error")
+
+    @bp.get("/ui/speakers/attributes")
+    async def attributes_modal():
+        if speaker is None or not speaker.enabled:
+            return await render_speakers("Speaker ID is disabled.", "error")
+        sid = (request.args.get("id") or "").strip()
+        if not sid:
+            return await render_speakers("No speaker id given.", "error")
+        return await render_attributes_modal(sid)
+
+    @bp.post("/ui/speakers/attributes")
+    async def save_attributes():
+        if speaker is None or not speaker.enabled:
+            return await render_speakers("Speaker ID is disabled.", "error")
+        form = await request.form
+        sid = (form.get("id") or "").strip()
+        raw = form.get("attributes") or ""
+        if not sid:
+            return await render_speakers("No speaker id given.", "error")
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            return await render_attributes_modal(sid, raw=raw, message=f"Invalid JSON: {e}", message_type="error")
+        if not isinstance(parsed, dict):
+            return await render_attributes_modal(sid, raw=raw, message="Attributes must be a JSON object.", message_type="error")
+        # The store's attributes are string→string; coerce values so a pasted
+        # number/bool round-trips as its text rather than breaking downstream.
+        attributes = {str(k): str(v) for k, v in parsed.items()}
+        try:
+            updated = await speaker.update_speaker(sid, attributes=attributes)
+        except Exception as e:
+            logger.exception("Saving attributes for %r failed", sid)
+            return await render_attributes_modal(sid, raw=raw, message=f"Save failed: {e}", message_type="error")
+        if not updated:
+            return await render_attributes_modal(sid, raw=raw, message="Speaker not found.", message_type="error")
+        # Success: refresh the table out-of-band; the modal target gets nothing → closes.
+        return await render_template(
+            "_speakers_oob.html",
+            speakers=await speakers_list(),
+            active_speaker_model=active_speaker_model(),
+            message="Attributes updated.",
+            message_type="ok",
+        )
 
     return bp
 

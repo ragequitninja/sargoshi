@@ -1,0 +1,25 @@
+<div class="modal-backdrop" onclick="if (event.target === this) this.remove()">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Attributes for {{ s.name }}">
+        <div class="modal-head">
+            <h3>Attributes — {{ s.name }}</h3>
+            <button type="button" class="small secondary" title="Close"
+                    onclick="this.closest('.modal-backdrop').remove()">✕
+            </button>
+        </div>
+        {% if message %}
+        <div class="msg {{ message_type }}">{{ message }}</div>
+        {% endif %}
+        <form hx-post="{{ url_for('ui.save_attributes') }}" hx-target="#modal-slot" hx-swap="innerHTML">
+            <input type="hidden" name="id" value="{{ s.id }}">
+            <label for="attrs-json">Edit as JSON</label>
+            <textarea id="attrs-json" name="attributes" class="json" rows="14"
+                      spellcheck="false" autocomplete="off">{{ attributes_json }}</textarea>
+            <div class="modal-actions">
+                <button type="submit">Save</button>
+                <button type="button" class="secondary"
+                        onclick="this.closest('.modal-backdrop').remove()">Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

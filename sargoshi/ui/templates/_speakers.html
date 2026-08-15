@@ -19,7 +19,12 @@
           <span class="hint">stale</span>
         {% endif %}
       </td>
-      <td>{% for k, v in s.attributes.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      <td>
+        <button class="small secondary" hx-get="{{ url_for('ui.attributes_modal') }}?id={{ s.id }}"
+                hx-target="#modal-slot" hx-swap="innerHTML">
+          {% if s.attributes %}{{ s.attributes|length }} attribute{{ 's' if s.attributes|length != 1 else '' }}{% else %}add…{% endif %}
+        </button>
+      </td>
       <td class="mono">{{ s.id }}</td>
       <td>
         <button class="small secondary" hx-get="{{ url_for('ui.manage_embeddings') }}?id={{ s.id }}"
