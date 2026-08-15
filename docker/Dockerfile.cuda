@@ -65,7 +65,13 @@ RUN pip install -e ".[ctranslate2,speechbrain]" \
     && find /opt/venv -type d -name '__pycache__' -prune -exec rm -rf {} + \
     && find /opt/venv -type f -name '*.pyc' -delete
 
-RUN useradd --create-home --uid 1000 sargoshi \
+# Ubuntu 24.04 ships a default user at UID 1000; drop whoever owns it so 'sargoshi'
+# can keep UID 1000 — matching the CPU image so a shared /data volume keeps stable
+# ownership.
+RUN if getent passwd 1000 >/dev/null; then \
+        userdel -r "$(getent passwd 1000 | cut -d: -f1)" 2>/dev/null || true; \
+    fi \
+    && useradd --create-home --uid 1000 sargoshi \
     && mkdir -p /data \
     && chown -R sargoshi:sargoshi /app /data
 
