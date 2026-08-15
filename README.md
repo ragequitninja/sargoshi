@@ -36,7 +36,7 @@ python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e ".[ctranslate2,speechbrain]"
 ```
 
-**You must provide a `config.yaml`** — the service won't start without one (see config.example.yaml for a full
+**You must provide a `config.yaml`** - the service won't start without one (see config.example.yaml for a full
 example with every key). Create one, then start the server:
 
 ```bash

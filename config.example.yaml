@@ -1,0 +1,36 @@
+# sargoshi example configuration.
+
+logging:
+  level: INFO                  # DEBUG | INFO | WARNING | ERROR | CRITICAL
+
+backend:
+  device: cpu                  # STT device: cpu | cuda | auto  (CTranslate2)
+  model: large-v3-turbo
+  compute_type: int8           # use "int8" on CPU; use "int8_float16" or "float16" on GPU
+  language: null               # null = autodetect
+  beam_size: 5
+  word_timestamps: true
+  cpu_threads: 0               # 0 = all cores
+  num_workers: 1               # concurrent decodes in the engine pool
+
+frontends:                     # empty/disabled by setting enabled: false
+  wyoming:
+    enabled: true
+    uri: tcp://0.0.0.0:10300
+  ui:
+    enabled: true
+    host: 0.0.0.0
+    port: 8080
+
+speaker:
+  enabled: true
+  model: ecapa-tdnn
+  device: cpu                          # speaker device: cpu | cuda | auto
+  threshold: 0.60
+  db_path: speakers.db
+  delivery: [metadata, structured]     # metadata | inline | structured
+  inline_template: "<Speaker: {name}>"
+  unknown_label: "<Unknown>"
+
+storage:
+  model_cache: models
