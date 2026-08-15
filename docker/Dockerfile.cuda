@@ -1,0 +1,81 @@
+# CUDA image — CTranslate2 / faster-whisper STT (and ECAPA speaker ID) on an NVIDIA
+# GPU. Built on the cuDNN *runtime* base so CTranslate2 links the system
+# cuDNN/cuBLAS (no LD_LIBRARY_PATH juggling).
+#
+# Version coupling — verify/adjust for your driver: the CUDA base, the torch CUDA
+# wheel index, and CTranslate2's cuDNN requirement must line up. This base is
+# CUDA 12.x + cuDNN 9, which matches current ctranslate2 / faster-whisper and the
+# cu124 torch wheels. Bump all three together if you change one.
+#
+# Needs the NVIDIA Container Toolkit on the host; run with --gpus all:
+#   docker run --gpus all --rm \
+#     -v $PWD/config.yaml:/data/config.yaml:ro \
+#     -v sargoshi-data:/data -p 10300:10300 -p 8080:8080 sargoshi:cuda
+# and set the GPU in config:  backend: { device: cuda, compute_type: float16 }
+ARG CUDA_IMAGE=nvidia/cuda:12.6.2-cudnn-runtime-ubuntu24.04
+FROM ${CUDA_IMAGE}
+
+ENV LANG=C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+# Let `--gpus all` expose the device; CTranslate2 and torch need compute + utility.
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+LABEL \
+    org.opencontainers.image.authors="Pieter Harvey" \
+    org.opencontainers.image.description="Speech recognition and text-to-speech" \
+    org.opencontainers.image.documentation="https://github.com/ragequitninja/sargoshi/blob/main/README.md" \
+    org.opencontainers.image.licenses="Apache-2.0" \
+    org.opencontainers.image.source="https://github.com/ragequitninja/sargoshi" \
+    org.opencontainers.image.title="Sargoshi" \
+    org.opencontainers.image.url="https://github.com/ragequitninja/sargoshi"
+
+# Python (ubuntu 24.04 → 3.12) + runtime libs. libsndfile1 → soundfile; libgomp1
+# → OpenMP for CTranslate2 / torch. cuDNN/cuBLAS come from the CUDA base image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-venv \
+        libsndfile1 \
+        libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/data/hf
+
+RUN python3 -m venv "$VIRTUAL_ENV" && pip install --upgrade pip
+
+# CUDA (cu124) PyTorch so speaker ID can also use the GPU. Its own layer so it
+# caches across source changes.
+RUN pip install --index-url https://download.pytorch.org/whl/cu124 \
+        torch torchaudio
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY setup.cfg ./
+COPY version.txt ./
+COPY version_githash.txt ./
+COPY sargoshi ./sargoshi
+
+RUN pip install -e ".[ctranslate2,speechbrain]" \
+    && find /opt/venv -type d -name '__pycache__' -prune -exec rm -rf {} + \
+    && find /opt/venv -type f -name '*.pyc' -delete
+
+RUN useradd --create-home --uid 1000 sargoshi \
+    && mkdir -p /data \
+    && chown -R sargoshi:sargoshi /app /data
+
+USER sargoshi
+WORKDIR /data
+
+EXPOSE 10300 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
+    CMD python -c "import os,urllib.request as u; u.urlopen('http://127.0.0.1:8080/ready',timeout=3)"
+
+ENTRYPOINT ["sargoshi"]
+CMD ["--config", "config.yaml"]

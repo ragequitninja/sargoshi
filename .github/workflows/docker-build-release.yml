@@ -31,7 +31,8 @@ jobs:
                       | ($file | sub("^docker/Dockerfile\\."; "")) as $variant
                       | {variant: $variant,
                          file: $file,
-                         suffix: (if $variant == "cpu" then "" else "-\($variant)" end)}))}')
+                         suffix: (if $variant == "cpu" then "" else "-\($variant)" end),
+                         platforms: (if $variant == "cpu" then "linux/amd64,linux/aarch64" else "linux/amd64" end)}))}')
           echo "Discovered: $matrix"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -96,7 +97,8 @@ jobs:
         with:
           context: .
           file: ${{ matrix.file }}
-          platforms: linux/amd64,linux/aarch64
+          # cpu → amd64 + arm64; every other variant (cuda, …) is amd64-only.
+          platforms: ${{ matrix.platforms }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
