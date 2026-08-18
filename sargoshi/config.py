@@ -362,14 +362,15 @@ def _device(value: object, key: str, supported: tuple[str, ...]) -> str:
     """Validate a device name against a subsystem's supported set.
 
     Each subsystem owns which devices it can actually run (the CTranslate2 STT
-    backend can't use ``rocm`` or ``openvino`` and the torch speaker embedder can't
-    use ``openvino``), so choosing an unsupported device errors here at a config load.
+    backend can't use ``rocm`` or ``openvino``; the speaker embedders accept the
+    torch devices, and WavLM additionally accepts the ``openvino*`` targets). The
+    speaker set is the union across models, so an out-of-set value errors here at
+    config load; a valid-but-model-incompatible pair (e.g. ECAPA + ``openvino``) is
+    caught when the embedder is built at startup.
     """
     v = str(value).strip().lower()
     if v not in supported:
-        raise ConfigError(
-            f"{key}: {v!r} is not supported by this subsystem; " f"expected one of {', '.join(supported)}"
-        )
+        raise ConfigError(f"{key}: {v!r} is not supported by this subsystem; expected one of {', '.join(supported)}")
     return v
 
 
@@ -389,9 +390,7 @@ def _delivery(value: object) -> tuple[str, ...]:
     modes = _to_str_list(value, "speaker.delivery")
     for mode in modes:
         if mode not in DELIVERY_MODES:
-            raise ConfigError(
-                f"speaker.delivery: unknown mode {mode!r}; " f"expected any of {', '.join(DELIVERY_MODES)}"
-            )
+            raise ConfigError(f"speaker.delivery: unknown mode {mode!r}; expected any of {', '.join(DELIVERY_MODES)}")
     return modes
 
 

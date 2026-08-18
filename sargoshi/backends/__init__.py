@@ -37,4 +37,4 @@ def create_backend(device: str, **kwargs: Any) -> Backend:
         from .ctranslate2 import CTranslate2Backend
 
         return CTranslate2Backend(**kwargs)
-    raise ValueError(f"Unknown device {device!r}; expected one of " f"'cuda', 'cpu', 'auto', 'rocm', 'openvino'.")
+    raise ValueError(f"Unknown device {device!r}; expected one of 'cuda', 'cpu', 'auto', 'rocm', 'openvino'.")

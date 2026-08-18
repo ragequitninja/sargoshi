@@ -20,52 +20,64 @@ keywords = [
 ]
 
 dependencies = [
-  "numpy>=1.24",           # audio/vector math (backends, speaker)
-  "pyyaml>=6.0",           # config load / full write
-  "ruamel.yaml>=0.18",     # comment-preserving config writes (UI/runtime edits)
-  "wyoming>=1.5",          # Wyoming frontend (Home Assistant) — the always-on frontend
+  "numpy>=1.24",
+  "pyyaml>=6.0",
+  "ruamel.yaml>=0.18",
+  "wyoming>=1.5",
   "quart>=0.19",
-  "quart-schema>=0.20",
   "hypercorn>=0.16",
   "jinja2>=3.1",
-  "pydantic>=2.6",
-  "sqlalchemy[asyncio]>=2.0",  # voiceprint store (async ORM)
-  "aiosqlite>=0.20",           # async SQLite driver for the store
-  "alembic>=1.13",             # schema migrations, auto-applied at startup
+  "sqlalchemy[asyncio]>=2.0",
+  "aiosqlite>=0.20",
+  "alembic>=1.13",
   "torch>=2.2",
-  "torchaudio>=2.2",
-  "soundfile>=0.12",
 ]
 
 [project.optional-dependencies]
 ctranslate2 = [
-  "faster-whisper>=1.0"
+  "faster-whisper>=1.0",
 ]
 speechbrain = [
-  "speechbrain>=1.0"
+  "speechbrain>=1.0",
+]
+wavlm = [
+  "transformers>=4.20,<5",
+]
+wavlm-openvino = [
+  "optimum-intel[openvino]>=1.16",
+  "transformers>=4.20,<5",
+]
+
+cpu = [
+  "sargoshi[ctranslate2,speechbrain,wavlm]",
+]
+cuda = [
+  "sargoshi[ctranslate2,speechbrain,wavlm]",
+]
+openvino = [
+  "sargoshi[ctranslate2,speechbrain,wavlm-openvino]",
 ]
 
 [project.scripts]
 sargoshi = "sargoshi.__main__:main"
 
 [dependency-groups]
-dev = [
-  "grpcio-tools>=1.60",   # proto codegen
+dev = [# proto codegen
   "pytest>=8.0",
   "pytest-asyncio>=0.23",
-  "pytest-cov>=5.0",      # coverage (pytest --cov)
+  "pytest-cov>=5.0",
   "ruff>=0.5",
   "mypy>=1.9",
   "types-pyyaml>=6.0",
-  "black>=24.0",
-  "flake8>=7.0",
   "pylint>=3.0",
-  "isort>=5.13",
-  "autopep8>=2.0",
+  "poethepoet>=0.24",
 ]
 
 [project.urls]
 "Source Code" = "http://github.com/ragequitninja/sargoshi"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
 
 [tool.setuptools]
 platforms = ["any"]
@@ -105,35 +117,10 @@ packages = ["sargoshi"]
 module = [
   "faster_whisper.*",
   "speechbrain.*",
+  "transformers.*",
+  "optimum.*",
 ]
 ignore_missing_imports = true
-
-[tool.black]
-line-length = 120
-target-version = ['py312', 'py313']
-include = '\.pyi?$'
-exclude = '''
-/(
-  \.eggs
-| \.git
-| \.hg
-| \.mypy_cache
-| \.tox
-| \.venv
-| _build
-| buck-out
-| build
-| dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
@@ -171,3 +158,45 @@ disable = [
   "R0917",
   "C0301",
 ]
+
+[tool.poe.tasks.ruff]
+help = "Lint (E/F + I) and check formatting with ruff"
+sequence = [
+  "ruff check sargoshi tests",
+  "ruff format --check --diff sargoshi tests",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.ruff-fix]
+help = "Auto-fix lint and reformat with ruff"
+sequence = [
+  "ruff check --fix sargoshi tests",
+  "ruff format sargoshi tests",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.mypy]
+help = "Type-check with mypy"
+cmd = "mypy sargoshi tests"
+
+[tool.poe.tasks.pylint]
+help = "Lint with pylint (module and tests use their own configs)"
+sequence = [
+  "pylint sargoshi",
+  "pylint tests --rcfile tests/.pylintrc",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.lint]
+help = "Run ruff, mypy, and pylint"
+sequence = ["ruff", "mypy", "pylint"]
+default_item_type = "ref"
+ignore_fail = "return_non_zero"
+
+[tool.poe.tasks.test]
+help = "Run the unit tests (pytest tests/unit)"
+cmd = "pytest tests/unit"
+
+[tool.poe.tasks.run]
+help = "Run sargoshi; extra args pass through, e.g. poe run --config config.yaml"
+cmd = "python -m sargoshi"

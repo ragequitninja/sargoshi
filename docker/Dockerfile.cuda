@@ -61,7 +61,7 @@ COPY version.txt ./
 COPY version_githash.txt ./
 COPY sargoshi ./sargoshi
 
-RUN pip install -e ".[ctranslate2,speechbrain]" \
+RUN pip install -e ".[cuda]" \
     && find /opt/venv -type d -name '__pycache__' -prune -exec rm -rf {} + \
     && find /opt/venv -type f -name '*.pyc' -delete
 

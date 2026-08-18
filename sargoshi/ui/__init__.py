@@ -105,8 +105,8 @@ def create_ui_blueprint(
             return await render_speakers("Speaker not found.", "error")
         # ``raw`` (the user's edited text) is preserved on a validation error so
         # they don't lose their changes; otherwise show the stored attributes.
-        json_text = raw if raw is not None else json.dumps(
-            profile.attributes, indent=2, sort_keys=True, ensure_ascii=False
+        json_text = (
+            raw if raw is not None else json.dumps(profile.attributes, indent=2, sort_keys=True, ensure_ascii=False)
         )
         return await render_template(
             "_attributes_modal.html",
@@ -317,7 +317,9 @@ def create_ui_blueprint(
         except json.JSONDecodeError as e:
             return await render_attributes_modal(sid, raw=raw, message=f"Invalid JSON: {e}", message_type="error")
         if not isinstance(parsed, dict):
-            return await render_attributes_modal(sid, raw=raw, message="Attributes must be a JSON object.", message_type="error")
+            return await render_attributes_modal(
+                sid, raw=raw, message="Attributes must be a JSON object.", message_type="error"
+            )
         # The store's attributes are string→string; coerce values so a pasted
         # number/bool round-trips as its text rather than breaking downstream.
         attributes = {str(k): str(v) for k, v in parsed.items()}

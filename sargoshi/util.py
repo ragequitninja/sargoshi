@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
 # Cache for version to avoid repeated file reading
-_version_cache: Optional[str] = None
+_version_cache: str | None = None
 
 
 def get_version() -> str:
