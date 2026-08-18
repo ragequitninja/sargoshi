@@ -24,9 +24,9 @@ frontends:                     # empty/disabled by setting enabled: false
 
 speaker:
   enabled: true
-  model: ecapa-tdnn
+  model: ecapa-tdnn                    # ecapa-tdnn | wavlm-base-plus-sv (needs the wavlm extra)
   device: cpu                          # speaker device: cpu | cuda | auto
-  threshold: 0.60
+  threshold: 0.60                      # cosine match threshold; retune per model (WavLM sits higher)
   db_path: speakers.db
   delivery: [metadata, structured]     # metadata | inline | structured
   inline_template: "<Speaker: {name}>"

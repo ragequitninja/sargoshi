@@ -32,6 +32,14 @@ async def test_status_partial(fake_pool, fake_speaker, config_service):
     assert r.status_code == 200 and "large-v3-turbo" in await r.get_data(as_text=True)
 
 
+async def test_status_shows_active_speaker_model(fake_pool, fake_speaker, config_service):
+    client = _client(fake_pool, fake_speaker, config_service)
+    r = await client.get("/ui/status")
+    html = await r.get_data(as_text=True)
+    assert r.status_code == 200
+    assert "Speaker ID" in html and "ecapa-tdnn" in html  # the active embedder model
+
+
 async def test_switch_model_persists_to_config(fake_pool, fake_speaker, config_service, config_path):
     client = _client(fake_pool, fake_speaker, config_service)
     r = await client.post("/ui/model", form={"model": "small"})

@@ -28,5 +28,5 @@ async def test_status_snapshot(fake_pool, fake_speaker, config_service):
     body = await r.get_json()
     assert r.status_code == 200
     assert body["model"]["model"] == "large-v3-turbo"
-    assert body["speaker"] == {"enabled": True, "ready": True}
+    assert body["speaker"] == {"enabled": True, "ready": True, "model": "ecapa-tdnn"}
     assert body["frontends"]["wyoming"]["enabled"] is True

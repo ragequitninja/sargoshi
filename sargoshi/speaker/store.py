@@ -5,7 +5,7 @@ import logging
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -385,7 +385,7 @@ async def _recompute_centroid(session: AsyncSession, speaker_id: str, now: str, 
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _vec_to_blob(vec: np.ndarray) -> bytes:

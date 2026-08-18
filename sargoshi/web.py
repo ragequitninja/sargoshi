@@ -61,7 +61,7 @@ def status_payload(pool: ModelPool, speaker: SpeakerService | None, config: Conf
         "model": pool.status(),  # model, device, compute_type, loaded, ready
     }
     if speaker is not None:
-        data["speaker"] = {"enabled": speaker.enabled, "ready": speaker.ready}
+        data["speaker"] = {"enabled": speaker.enabled, "ready": speaker.ready, "model": speaker.model}
     if config is not None:
         f = config.frontends
         data["frontends"] = {

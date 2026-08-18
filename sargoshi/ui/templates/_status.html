@@ -9,6 +9,7 @@
   <dt>Speaker ID</dt>
   <dd>{% if status.speaker.enabled %}enabled
         · {{ "ready" if status.speaker.ready else "loading…" }}
+        · <span class="tag">{{ status.speaker.model }}</span>
       {% else %}disabled{% endif %}</dd>
   {% endif %}
   <dt>Version</dt>

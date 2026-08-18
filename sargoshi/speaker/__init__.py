@@ -7,6 +7,8 @@ from .embed import (
     ECAPAEmbedder,
     Embedder,
     EmbeddingError,
+    OpenVINOWavLMEmbedder,
+    TorchWavLMEmbedder,
     create_embedder,
     pcm_duration_s,
     trim_silence,
@@ -24,6 +26,8 @@ __all__ = [
     "SpeakerService",
     "Embedder",
     "ECAPAEmbedder",
+    "TorchWavLMEmbedder",
+    "OpenVINOWavLMEmbedder",
     "create_embedder",
     "EmbeddingError",
     "VoiceprintStore",
@@ -104,8 +108,7 @@ class SpeakerService:
         stale = len(await self._store.list_profiles()) - active
         if stale > 0:
             logger.warning(
-                "%d speaker profile(s) have no voiceprints for model %r — "
-                "re-enroll them under this model to use them.",
+                "%d speaker profile(s) have no voiceprints for model %r — re-enroll them under this model to use them.",
                 stale,
                 self._embedder.model_id,
             )
