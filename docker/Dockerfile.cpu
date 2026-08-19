@@ -33,7 +33,6 @@ RUN pip install --index-url https://download.pytorch.org/whl/cpu \
 WORKDIR /app
 
 COPY pyproject.toml ./
-COPY setup.cfg ./
 COPY version.txt ./
 COPY version_githash.txt ./
 COPY sargoshi ./sargoshi
